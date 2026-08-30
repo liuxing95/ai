@@ -282,6 +282,10 @@ const parallelSearchOutputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * AI Gateway 的并行搜索服务端工具。并行调度由 Provider/Gateway 完成，不能被
+ * `executeToolCall` 当成应用本地函数再次执行。
+ */
 export const parallelSearchToolFactory = createProviderExecutedToolFactory<
   ParallelSearchInput,
   ParallelSearchOutput,

@@ -29,6 +29,10 @@ export type GoogleSearchToolArgs = z.infer<
   typeof googleSearchToolArgsBaseSchema
 >;
 
+/**
+ * Google Search grounding 的服务端工具定义。搜索、grounding 和引用由 Google
+ * Provider 完成，Core 只处理标准化的 tool-call/tool-result。
+ */
 export const googleSearch = createProviderExecutedToolFactory<
   {},
   {},

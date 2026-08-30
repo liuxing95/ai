@@ -7,6 +7,7 @@ const viewXVideoOutputSchema = z.object({
   duration: z.number().optional().describe('duration in seconds'),
 });
 
+/** xAI 服务端 X 视频查看工具；Core 只转发声明和 Provider 返回的结果。 */
 const viewXVideoToolFactory = createProviderExecutedToolFactory({
   id: 'xai.view_x_video',
   inputSchema: z.object({}).describe('no input parameters'),

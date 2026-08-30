@@ -41,6 +41,10 @@ const mcpServerOutputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * xAI 代表调用方连接 MCP server 的服务端工具 Factory。网络连接、鉴权及工具调用由
+ * xAI 负责；SDK 将响应标准化，必要时以动态 provider-executed 调用向上游透传。
+ */
 const mcpServerToolFactory = createProviderExecutedToolFactory<
   {},
   {

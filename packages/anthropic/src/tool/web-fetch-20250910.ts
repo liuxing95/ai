@@ -52,6 +52,10 @@ const webFetch_20250910InputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * Anthropic 托管 URL 抓取工具的 Factory。HTTP 抓取、引用和延迟结果都由 Provider
+ * 处理；adapter 只负责在 Anthropic 内容块与 SDK 通用 tool-result 间转换。
+ */
 const factory = createProviderExecutedToolFactory<
   {
     /**

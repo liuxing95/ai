@@ -40,6 +40,11 @@ const toolSearchBm25_20251119InputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * Anthropic 服务端 BM25 工具检索 Factory。它可让 Claude 从 defer_loading 的目录中
+ * 找到候选工具；这是 Anthropic 原生能力，不是 AI SDK 针对任意 Provider 的通用
+ * 工具检索/路由实现。
+ */
 const factory = createProviderExecutedToolFactory<
   {
     /**

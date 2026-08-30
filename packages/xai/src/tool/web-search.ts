@@ -31,6 +31,10 @@ const webSearchOutputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * xAI 服务端 Web Search。与所有 provider-executed 工具一样，它没有本地 execute，
+ * 不会通过 Core 的应用侧工具执行队列。
+ */
 const webSearchToolFactory = createProviderExecutedToolFactory<
   {},
   {

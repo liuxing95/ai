@@ -41,6 +41,14 @@ export type OpenAIToolOptions = {
   };
 };
 
+/**
+ * 将 Core 标准工具数组转换为 OpenAI Responses API 的 `tools` 请求字段。
+ *
+ * 这只是协议适配：遍历后的 `openaiTools` 会由 `OpenAIResponsesLanguageModel`
+ * 放进 POST `/responses` 的 body。`push()` 不会执行 web search、code interpreter
+ * 或 apply_patch；模型是否调用、以及服务端工具是否执行，都发生在 OpenAI 服务端。
+ * 响应解析器再通过 `providerExecuted` 把执行责任传回 Core。
+ */
 export async function prepareResponsesTools({
   tools,
   toolChoice,
@@ -189,6 +197,9 @@ export async function prepareResponsesTools({
         break;
       }
       case 'provider': {
+        // Provider 工具的 id 是一个显式能力边界。只有列出的 `openai.*` id
+        // 才能转换为 OpenAI 原生工具；不支持的 id 不会被猜测性映射为 function
+        // 或另一个 Provider 的类似能力。
         const openaiToolCountBefore = openaiTools.length;
 
         switch (tool.id) {
@@ -234,6 +245,8 @@ export async function prepareResponsesTools({
             break;
           }
           case 'openai.apply_patch': {
+            // 仅声明 OpenAI 原生工具。返回的 apply_patch_call 没有
+            // providerExecuted 标记；若应用提供 execute，Core 会回调它实际落盘。
             openaiTools.push({
               type: 'apply_patch',
             });

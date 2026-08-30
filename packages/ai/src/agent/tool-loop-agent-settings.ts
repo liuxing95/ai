@@ -106,6 +106,12 @@ export type ToolLoopAgentSettings<
      * Limits the tools that are available for the model to call without
      * changing the tool call and result types in the result.
      */
+    /**
+     * 中文：按名称限制当前调用可提供给模型的工具，而不改变结果的完整 ToolSet 类型。
+     * Core 的 `filterActiveTools` 只做名称白名单筛选，并不会理解用户意图或检索
+     * 数千工具。需要工具检索/权限路由时，可由 Agent 在调用前计算该数组，或在
+     * `prepareStep` 中按每一步返回更小的候选集。
+     */
     activeTools?: ActiveTools<NoInfer<TOOLS>>;
 
     /**
@@ -143,10 +149,18 @@ export type ToolLoopAgentSettings<
     /**
      * Optional function that you can use to provide different settings for a step.
      */
+    /**
+     * 中文：在每次模型调用前动态调整该步骤设置的应用回调；可返回 `activeTools` 实现
+     * 按轮筛选，但 SDK 不会自行完成语义工具检索。
+     */
     prepareStep?: PrepareStepFunction<NoInfer<TOOLS>, RUNTIME_CONTEXT>;
 
     /**
      * A function that attempts to repair a tool call that failed to parse.
+     */
+    /**
+     * 中文：工具名或输入 Schema 解析失败时调用的应用修复函数。SDK 仅声明并调用该
+     * 钩子，不提供默认的修复模型请求或 JSON 修复实现。
      */
     repairToolCall?: ToolCallRepairFunction<NoInfer<TOOLS>>;
 
@@ -154,6 +168,9 @@ export type ToolLoopAgentSettings<
      * A function that attempts to repair a tool call that failed to parse.
      *
      * @deprecated Use `repairToolCall` instead.
+     */
+    /**
+     * 中文：`repairToolCall` 的历史实验别名；两者会进入同一条 `parseToolCall` 修复路径。
      */
     experimental_repairToolCall?: ToolCallRepairFunction<NoInfer<TOOLS>>;
 

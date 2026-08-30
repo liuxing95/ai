@@ -21,6 +21,14 @@ export interface AnthropicToolOptions {
   eagerInputStreaming?: boolean;
 }
 
+/**
+ * 将 Core 标准工具声明转换为 Anthropic Messages API 的 `tools` 数组。
+ *
+ * `anthropicTools.push()` 只构造 HTTP 请求 JSON：`AnthropicLanguageModel.getArgs`
+ * 随后把该数组赋给 `args.tools` 并 POST 到 `/v1/messages`。Python/Bash/Web Search
+ * 等 server tool 的实际运行发生在 Anthropic 服务端；响应解析时才标记
+ * `providerExecuted: true`，让 Core 不再调用本地 `execute`。
+ */
 export async function prepareTools({
   tools,
   toolChoice,
@@ -72,6 +80,8 @@ export async function prepareTools({
   for (const tool of tools) {
     switch (tool.type) {
       case 'function': {
+        // function 与 dynamic 在到达 Provider adapter 前都已规范化为 function；
+        // Anthropic 只看到应用声明的 name/description/input_schema。
         const cacheControl = validator.getCacheControl(tool.providerOptions, {
           type: 'tool definition',
           canCache: true,
@@ -130,11 +140,14 @@ export async function prepareTools({
       }
 
       case 'provider': {
+        // id 是 Provider 能力的显式白名单。此 switch 只翻译 Anthropic 自己支持
+        // 的工具，不做 OpenAI apply_patch → text editor 之类的语义转换。
         // Note: Provider-defined tools don't currently support providerOptions in the SDK,
         // so cache_control cannot be set on them. The Anthropic API supports caching all tools,
         // but the SDK would need to be updated to expose providerOptions on provider-defined tools.
         switch (tool.id) {
           case 'anthropic.code_execution_20250522': {
+            // 这里只把配置声明进请求；并不在 Node.js 进程执行 Python。
             betas.add('code-execution-2025-05-22');
             anthropicTools.push({
               type: 'code_execution_20250522',

@@ -59,6 +59,10 @@ export const fileSearchOutputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * OpenAI 向量库 File Search 的服务端工具定义；Core 只传递 vector store 配置并接收
+ * 查询结果。它和应用针对几千个“函数工具”实施的候选筛选是不同层级的检索能力。
+ */
 export const fileSearch = createProviderExecutedToolFactory<
   {},
   {

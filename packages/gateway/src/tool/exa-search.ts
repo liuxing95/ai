@@ -337,6 +337,10 @@ const exaSearchOutputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * AI Gateway 转发的 Exa Search 服务端工具；检索在 Gateway Provider 链路执行，
+ * 而非应用 Agent 进程。
+ */
 export const exaSearchToolFactory = createProviderExecutedToolFactory<
   ExaSearchInput,
   ExaSearchOutput,

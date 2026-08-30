@@ -16,6 +16,15 @@ import type { DynamicToolCall, TypedToolCall } from './tool-call';
 import type { ToolCallRepairFunction } from './tool-call-repair-function';
 import type { ToolInputRefinement } from './tool-input-refinement';
 
+/**
+ * 将 Provider adapter 输出的通用 `LanguageModelV4ToolCall` 校验并转换为 Core
+ * 可执行的 `TypedToolCall`。
+ *
+ * 这是“Provider 响应 → 应用侧工具执行”的边界：先按工具名取得 Schema，再安全地
+ * 解析和校验 JSON；只有成功的非 `providerExecuted` 调用才会在后续被
+ * `executeToolCall` 本地执行。Provider 服务端工具仍会经过这里，以便统一输出
+ * tool-call 事件和元数据，但之后会被执行队列跳过。
+ */
 export async function parseToolCall<TOOLS extends ToolSet>({
   toolCall,
   tools,
@@ -34,6 +43,9 @@ export async function parseToolCall<TOOLS extends ToolSet>({
   try {
     if (tools == null) {
       // provider-executed dynamic tools are not part of our list of tools:
+      // 中文：Provider 可在响应中动态引入服务端工具（例如 server-side tool search
+      // 找到的工具）。它不在应用的 ToolSet 中，仍可作为 provider-executed
+      // 动态调用向上游透传；绝不能尝试本地执行。
       if (toolCall.providerExecuted && toolCall.dynamic) {
         return await refineParsedToolCallInput({
           toolCall: await parseProviderExecutedDynamicToolCall(toolCall),
@@ -60,6 +72,8 @@ export async function parseToolCall<TOOLS extends ToolSet>({
         throw error;
       }
 
+      // 修复回调由应用提供（包括已废弃的 experimental 字段），SDK 只注入
+      // 上下文并对它返回的调用重新走同一套 Schema 校验。
       let repairedToolCall: LanguageModelV4ToolCall | null = null;
 
       try {
@@ -94,6 +108,8 @@ export async function parseToolCall<TOOLS extends ToolSet>({
     }
   } catch (error) {
     // use parsed input when possible
+    // 中文：即使解析或修复失败，也保留可读的调用部件给 UI/调用方。它会标记为
+    // dynamic + invalid，后续调度会把它转为本地错误结果而非执行未知输入。
     const parsedInput = await safeParseJSON({ text: toolCall.input });
     const input = parsedInput.success ? parsedInput.value : toolCall.input;
     const tool = getOwn(tools, toolCall.toolName);
@@ -188,6 +204,8 @@ async function doParseToolCall<TOOLS extends ToolSet>({
 
   // when the tool call has no arguments, we try passing an empty object to the schema
   // (many LLMs generate empty strings for tool calls with no arguments)
+  // 中文：无参工具常被模型表示为空字符串；此处将其视为 `{}` 再按 Schema 校验，避免
+  // 因 Provider/模型的表示差异而误判为无效调用。
   const parseResult =
     toolCall.input.trim() === ''
       ? await safeValidateTypes({ value: {}, schema })

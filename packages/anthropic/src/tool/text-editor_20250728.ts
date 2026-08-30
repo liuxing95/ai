@@ -28,6 +28,14 @@ const textEditor_20250728InputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * Anthropic 文本编辑原生协议的应用侧工具工厂。
+ *
+ * 它只固定 Claude 的 command/path Schema。adapter 将它声明为
+ * `text_editor_20250728`，模型返回 `tool_use` 后 Core 会调用应用传入的 `execute`
+ * 实际读写本地文件。因此它并非 Anthropic 托管执行，也不会和 OpenAI apply_patch
+ * 自动互相转换；应用需在自己的 Agent 能力层实现统一/降级策略。
+ */
 const factory = createProviderDefinedToolFactory<
   {
     /**

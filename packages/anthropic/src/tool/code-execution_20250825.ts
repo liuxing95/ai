@@ -104,6 +104,10 @@ export const codeExecution_20250825InputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * Anthropic 2025-08 版托管代码执行工具。其 programmatic tool-call 输入和结果均由
+ * Anthropic API 驱动；Core 仅透传调用/结果，绝不会在本地重跑代码。
+ */
 const factory = createProviderExecutedToolFactory<
   | {
       type: 'programmatic-tool-call';

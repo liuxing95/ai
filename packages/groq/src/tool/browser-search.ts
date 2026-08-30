@@ -17,6 +17,10 @@ import { z } from 'zod/v4';
  *
  * @see https://console.groq.com/docs/browser-search
  */
+/**
+ * Groq Browser Search 的服务端工具定义。该工具的浏览/检索不经过 AI SDK 本地
+ * `execute`，adapter 只负责将 Groq 的请求和结果映射为统一协议。
+ */
 export const browserSearch = createProviderExecutedToolFactory<
   {
     // Browser search doesn't take input parameters - it's controlled by the prompt

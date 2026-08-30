@@ -581,6 +581,10 @@ const takoSearchOutputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * AI Gateway 转发的 Tako Search 服务端工具。它保留 Provider 的检索执行权，
+ * AI SDK 只声明能力并处理标准化结果。
+ */
 export const takoSearchToolFactory = createProviderExecutedToolFactory<
   TakoSearchInput,
   TakoSearchOutput,

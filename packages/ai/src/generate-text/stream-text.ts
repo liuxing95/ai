@@ -478,6 +478,10 @@ export function streamText<
      * Limits the tools that are available for the model to call without
      * changing the tool call and result types in the result.
      */
+    /**
+     * 中文：按名称限制当前请求的候选工具。此参数不是语义工具检索：Core 仅做精确名称
+     * 过滤；应用可借助 `prepareStep` 在每轮为大量工具选择候选子集。
+     */
     activeTools?: ActiveTools<NoInfer<TOOLS>>;
 
     /**
@@ -524,10 +528,16 @@ export function streamText<
      * @returns An object that contains the settings for the step.
      * If you return undefined (or for undefined settings), the settings from the outer level will be used.
      */
+    /**
+     * 中文：每轮流式模型请求前执行的应用回调，可动态返回本轮 `activeTools`。
+     */
     prepareStep?: PrepareStepFunction<NoInfer<TOOLS>, RUNTIME_CONTEXT>;
 
     /**
      * A function that attempts to repair a tool call that failed to parse.
+     */
+    /**
+     * 中文：解析调用失败时由应用提供的修复回调；SDK 只将其传入 `parseToolCall`。
      */
     repairToolCall?: ToolCallRepairFunction<TOOLS>;
 
@@ -535,6 +545,9 @@ export function streamText<
      * A function that attempts to repair a tool call that failed to parse.
      *
      * @deprecated Use `repairToolCall` instead.
+     */
+    /**
+     * 中文：`repairToolCall` 的历史实验别名。
      */
     experimental_repairToolCall?: ToolCallRepairFunction<TOOLS>;
 
@@ -2024,6 +2037,8 @@ class DefaultStreamTextResult<
             prepareStepResult?.model ?? model,
           );
 
+          // 与 generateText 相同：按名称留下本轮候选工具。SDK 没有对海量工具
+          // 做语义筛选；应用可在 prepareStep 中先检索、排序并返回 activeTools。
           const stepActiveTools = filterActiveTools({
             tools,
             activeTools: prepareStepResult?.activeTools ?? activeTools,

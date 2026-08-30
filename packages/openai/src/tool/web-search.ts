@@ -64,6 +64,10 @@ export const webSearchOutputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * OpenAI 托管 Web Search 的工具工厂。该标记使 Core 仅将其配置交给
+ * `prepareResponsesTools`，并消费响应中的引用/结果；网络访问不在应用进程执行。
+ */
 export const webSearchToolFactory = createProviderExecutedToolFactory<
   {
     // Web search doesn't take input parameters - it's controlled by the prompt

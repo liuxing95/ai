@@ -345,6 +345,10 @@ export async function generateText<
      * Limits the tools that are available for the model to call without
      * changing the tool call and result types in the result.
      */
+    /**
+     * 中文：按工具名限制发送给模型的工具。SDK 只做精确过滤；几千个工具的检索、排序和
+     * 权限判断应由应用先完成，或在 `prepareStep` 中逐步返回 `activeTools`。
+     */
     activeTools?: ActiveTools<NoInfer<TOOLS>>;
 
     /**
@@ -390,10 +394,16 @@ export async function generateText<
     /**
      * Optional function that you can use to provide different settings for a step.
      */
+    /**
+     * 中文：每个步骤发出 Provider 请求前的应用回调，可覆盖本轮模型、消息和候选工具。
+     */
     prepareStep?: PrepareStepFunction<NoInfer<TOOLS>, RUNTIME_CONTEXT>;
 
     /**
      * A function that attempts to repair a tool call that failed to parse.
+     */
+    /**
+     * 中文：解析工具调用失败时由应用执行的修复回调；AI SDK 没有内置修复实现。
      */
     repairToolCall?: ToolCallRepairFunction<NoInfer<TOOLS>>;
 
@@ -401,6 +411,9 @@ export async function generateText<
      * A function that attempts to repair a tool call that failed to parse.
      *
      * @deprecated Use `repairToolCall` instead.
+     */
+    /**
+     * 中文：`repairToolCall` 的历史实验别名，运行时被作为它的回退值使用。
      */
     experimental_repairToolCall?: ToolCallRepairFunction<NoInfer<TOOLS>>;
 
@@ -925,6 +938,9 @@ export async function generateText<
                 prepareStepResult?.runtimeContext ?? runtimeContext;
               toolsContext = prepareStepResult?.toolsContext ?? toolsContext;
 
+              // `activeTools` 是应用/Agent 提供的精确名称白名单。Core 不进行
+              // description/embedding 检索；若工具很多，应由 prepareStep 在此
+              // 前完成检索或权限筛选，再将候选名称传入。
               const stepActiveTools = filterActiveTools({
                 tools,
                 activeTools: prepareStepResult?.activeTools ?? activeTools,
@@ -1271,6 +1287,9 @@ export async function generateText<
               }
 
               // execute client tool calls:
+              // 中文：Provider adapter 已把服务端执行能力标记为 `providerExecuted`。
+              // Core 只为其余调用生成本地执行任务；服务端工具的结果已由 Provider
+              // 响应携带，不能再次调用应用侧 execute。
               clientToolCalls = stepToolCalls.filter(
                 toolCall => !toolCall.providerExecuted,
               );
@@ -1609,6 +1628,8 @@ async function executeTools<TOOLS extends ToolSet>({
     toolExecutionMs: number;
   }>
 > {
+  // 同一模型响应中的多个应用侧工具并行运行。这里不决定“调用哪个工具”，
+  // 选择已由模型完成；它只执行前面过滤后的调用并收集结果供下一 step 使用。
   const toolResults = await Promise.all(
     toolCalls.map(
       async toolCall =>

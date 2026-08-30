@@ -118,6 +118,10 @@ export const codeExecution_20260120InputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * Anthropic 2026-01 版托管代码执行工具。版本化 id 由 Anthropic adapter 映射到原生
+ * `code_execution` 请求；`providerExecuted` 保证 Core 只消费服务端执行结果。
+ */
 const factory = createProviderExecutedToolFactory<
   | {
       type: 'programmatic-tool-call';

@@ -46,6 +46,10 @@ const toolSearchRegex_20251119InputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * Anthropic 服务端正则工具检索 Factory。它从延迟加载的工具目录中发现候选工具，
+ * 不是 AI SDK 为任意 Provider 提供的通用检索/过滤算法。
+ */
 const factory = createProviderExecutedToolFactory<
   {
     /**

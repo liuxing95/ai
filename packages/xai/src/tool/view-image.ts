@@ -9,6 +9,7 @@ const viewImageOutputSchema = z.object({
     .describe('objects detected in the image'),
 });
 
+/** xAI 服务端图像查看工具；无本地 `execute`，由 Provider 返回分析结果。 */
 const viewImageToolFactory = createProviderExecutedToolFactory({
   id: 'xai.view_image',
   inputSchema: z.object({}).describe('no input parameters'),

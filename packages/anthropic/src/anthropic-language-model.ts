@@ -406,6 +406,8 @@ export class AnthropicLanguageModel implements LanguageModelV4 {
     // Create a shared cache control validator to track breakpoints across tools and messages
     const cacheControlValidator = new CacheControlValidator();
 
+    // 把 SDK 工具名映射到 Anthropic 响应中的原生名称，供“请求序列化”和“响应还原”
+    // 共用；它不是跨 Provider 的能力映射器。
     const toolNameMapping = createToolNameMapping({
       tools,
       providerToolNames: {
@@ -803,6 +805,7 @@ export class AnthropicLanguageModel implements LanguageModelV4 {
     const defaultEagerInputStreaming =
       stream && (anthropicOptions?.toolStreaming ?? true);
 
+    // prepareTools 只产生请求体的 tools JSON 和 beta 标记，既不选择工具也不执行它。
     const {
       tools: anthropicTools,
       toolChoice: anthropicToolChoice,
@@ -836,6 +839,7 @@ export class AnthropicLanguageModel implements LanguageModelV4 {
     return {
       args: {
         ...baseArgs,
+        // 这里将工具声明发送给 Claude；模型据此决定 tool_use/server_tool_use。
         tools: anthropicTools,
         tool_choice: anthropicToolChoice,
         stream: stream === true ? true : undefined, // do not send when not streaming
@@ -948,6 +952,7 @@ export class AnthropicLanguageModel implements LanguageModelV4 {
   async doGenerate(
     options: LanguageModelV4CallOptions,
   ): Promise<LanguageModelV4GenerateResult> {
+    // 这才是实际 API 调用；此前对 anthropicTools 的 push 均未执行 Provider 工具。
     const {
       args,
       warnings,
@@ -1092,6 +1097,8 @@ export class AnthropicLanguageModel implements LanguageModelV4 {
           break;
         }
         case 'server_tool_use': {
+          // Anthropic 已执行的 server tool 仍标准化为 tool-call/tool-result，供
+          // UI、追踪和多步消息复用；providerExecuted 会阻止 Core 本地执行。
           // code execution 20250825 needs mapping:
           if (
             part.name === 'text_editor_code_execution' ||
@@ -1291,6 +1298,8 @@ export class AnthropicLanguageModel implements LanguageModelV4 {
         }
 
         // code execution 20250522:
+        // 中文：Anthropic 已在服务端执行的代码结果：这里只转换字段以统一结果协议，
+        // 绝不重新运行代码。
         case 'code_execution_tool_result': {
           if (part.content.type === 'code_execution_result') {
             content.push({

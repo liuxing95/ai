@@ -118,6 +118,9 @@ export function executeToolsFromStream<
             // consume an approval id, so that id generation stays stable for
             // callers that rely on deterministic id sequences. They execute
             // directly (when not provider-executed).
+            // 中文：不需要审批的工具（`not-applicable`）不应消耗审批 ID，以保持
+            // 依赖确定性 ID 序列的调用方行为稳定。只有带有本地 `execute`
+            // 且非 Provider 服务端执行的工具才会直接加入执行队列。
             if (toolApprovalStatus.type === 'not-applicable') {
               if (tool.execute != null && chunk.providerExecuted !== true) {
                 toolCallsToExecute.push(chunk);
@@ -190,6 +193,8 @@ export function executeToolsFromStream<
 
             // approved tool calls continue to execution (when not
             // provider-executed):
+            // 中文：已批准的调用只有在应用侧执行时才继续：provider-executed 工具
+            // 已由 Provider 服务端执行，SDK 不应再次调用本地 `execute`。
             if (tool.execute != null && chunk.providerExecuted !== true) {
               toolCallsToExecute.push(chunk);
             }

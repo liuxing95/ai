@@ -248,6 +248,8 @@ export class OpenAIResponsesLanguageModel implements LanguageModelV4 {
     responseFormat,
   }: LanguageModelV4CallOptions) {
     const warnings: SharedV4Warning[] = [];
+    // 这是模型参数/消息角色兼容性判断，不是“此模型有哪些工具”的选择器。
+    // 工具集合在下面的 prepareResponsesTools 中按调用方实际传入的 tools 转换。
     const modelCapabilities = getOpenAILanguageModelCapabilities(this.modelId);
 
     if (topK != null) {
@@ -331,6 +333,8 @@ export class OpenAIResponsesLanguageModel implements LanguageModelV4 {
     // function declares output_schema. Preserve the affected SDK tool names so
     // prompt conversion can apply that encoding only to their results.
     const outputSchemaToolNames = new Set<string>();
+    // Core 的统一工具声明在这里被映射为 OpenAI 的原生 JSON。结果随后进入 body.tools
+    // 并 POST 到 /responses；模型在 OpenAI 侧基于该声明自行决定是否调用工具。
     const {
       tools: openaiTools,
       toolChoice: openaiToolChoice,
@@ -613,6 +617,8 @@ export class OpenAIResponsesLanguageModel implements LanguageModelV4 {
       ) as { args?: { environment?: { type?: string } } } | undefined
     )?.args?.environment?.type;
 
+    // shell Factory 静态上是 provider-defined，但 hosted container 模式的实际
+    // 命令由 OpenAI 执行。把这个请求级事实带到响应解析，避免 Core 本地二次执行。
     const isShellProviderExecuted =
       shellToolEnvType === 'containerAuto' ||
       shellToolEnvType === 'containerReference';
@@ -621,6 +627,7 @@ export class OpenAIResponsesLanguageModel implements LanguageModelV4 {
       webSearchToolName,
       args: {
         ...baseArgs,
+        // 这里的 tools 是“声明给模型”，不是在 SDK 进程中执行的任务队列。
         tools: openaiTools,
         tool_choice: openaiToolChoice,
       },
@@ -635,6 +642,7 @@ export class OpenAIResponsesLanguageModel implements LanguageModelV4 {
   async doGenerate(
     options: LanguageModelV4CallOptions,
   ): Promise<LanguageModelV4GenerateResult> {
+    // 到这里才真正向 Provider 发请求。上面所有 prepare/push 仅构造 body。
     const {
       args: body,
       warnings,
@@ -752,6 +760,8 @@ export class OpenAIResponsesLanguageModel implements LanguageModelV4 {
 
         case 'tool_search_call': {
           const toolCallId = part.call_id ?? part.id;
+          // server 模式的检索已在 OpenAI 执行；client 模式则保留为可由 Core
+          // 调用应用 execute 的 provider-defined 调用。
           const isHosted = part.execution === 'server';
 
           if (isHosted) {
@@ -826,6 +836,7 @@ export class OpenAIResponsesLanguageModel implements LanguageModelV4 {
                 commands: part.action.commands,
               },
             } satisfies InferSchema<typeof shellInputSchema>),
+            // hosted 容器的 shell 输出由 OpenAI 返回，Core 必须跳过本地 execute。
             ...(isShellProviderExecuted && { providerExecuted: true }),
             providerMetadata: {
               [providerOptionsName]: {
@@ -1219,6 +1230,7 @@ export class OpenAIResponsesLanguageModel implements LanguageModelV4 {
         }
 
         case 'code_interpreter_call': {
+          // OpenAI 托管代码解释器已运行完毕；调用和输出均由本响应提供。
           content.push({
             type: 'tool-call',
             toolCallId: part.id,
@@ -1242,6 +1254,8 @@ export class OpenAIResponsesLanguageModel implements LanguageModelV4 {
         }
 
         case 'apply_patch_call': {
+          // 特意不设置 providerExecuted：OpenAI 只生成结构化 patch；写文件是
+          // 调用方的责任，若提供 execute，Core 才会在后续调用它。
           content.push({
             type: 'tool-call',
             toolCallId: part.call_id,

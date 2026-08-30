@@ -36,6 +36,10 @@ const fileSearchOutputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * xAI Collection/File Search 的服务端工具 Factory；它并不负责为应用的 Function
+ * ToolSet 做候选筛选，后者仍需由 Agent 使用 activeTools/prepareStep 实现。
+ */
 const fileSearchToolFactory = createProviderExecutedToolFactory<
   {},
   {

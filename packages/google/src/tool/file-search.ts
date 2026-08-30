@@ -36,6 +36,10 @@ const fileSearchArgsBaseSchema = z.looseObject({
 
 export type GoogleFileSearchToolArgs = z.infer<typeof fileSearchArgsBaseSchema>;
 
+/**
+ * Google File Search 的服务端工具定义；它使用 Provider 管理的文件/检索资源，
+ * 不等同于应用层针对大量 Function Tool 所做的 `activeTools` 筛选。
+ */
 export const fileSearch = createProviderExecutedToolFactory<
   {},
   {},

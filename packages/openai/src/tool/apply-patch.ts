@@ -96,7 +96,18 @@ export type ApplyPatchOperation =
  * The tool factory creates a provider-defined tool that:
  * - Receives patch operations from the model (create_file, update_file, delete_file)
  * - Returns the status of applying those patches (completed or failed)
+ */
+/**
+ * 中文：OpenAI 原生 `apply_patch` 的应用侧适配工厂。
+ * 调用链：`openai.tools.applyPatch()` 创建带 `id: 'openai.apply_patch'` 的
+ * provider-defined 工具 → Core `prepareTools` 保留其 id/args →
+ * `prepareResponsesTools` 转成 OpenAI 请求的 `{ type: 'apply_patch' }` →
+ * 模型返回 `apply_patch_call` → adapter 将它转成普通（非 `providerExecuted`）
+ * tool-call → Core 调用调用方传入的 `execute` 来真正写入文件，并把 status/result
+ * 作为下一轮输入。
  *
+ * 所以这个 SDK 只统一 OpenAI 的调用格式和 Schema，绝不会在本仓库中应用 diff；
+ * 也没有把它自动翻译为 Anthropic 的 text editor 或其他 Provider 的 function。
  */
 export const applyPatchToolFactory =
   createProviderDefinedToolFactoryWithOutputSchema<
@@ -138,5 +149,9 @@ export const applyPatchToolFactory =
  * codebase using structured diffs. Instead of just suggesting edits, the model
  * emits patch operations that your application applies and then reports back on,
  * enabling iterative, multi-step code editing workflows.
+ */
+/**
+ * 中文：OpenAI `apply_patch` 工具工厂的公开别名；上方工厂注释说明其完整的
+ * 请求、应用侧执行和结果回传链路。
  */
 export const applyPatch = applyPatchToolFactory;

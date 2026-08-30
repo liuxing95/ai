@@ -18,6 +18,13 @@ type XaiResponsesToolChoice =
   | 'required'
   | { type: 'function'; name: string };
 
+/**
+ * 将 Core 工具声明转换为 xAI Responses API 的 tools 字段。
+ *
+ * xAI 原生工具只接受此处枚举的 `xai.*` provider id；其余 function/dynamic 工具
+ * 走通用 function 协议并由应用执行。未知 Provider 工具只生成 warning，不会自动
+ * 把 OpenAI apply_patch 或 Anthropic text editor 猜测性改写成另一个能力。
+ */
 export async function prepareResponsesTools({
   tools,
   toolChoice,
@@ -44,6 +51,8 @@ export async function prepareResponsesTools({
     toolByName.set(tool.name, tool);
 
     if (tool.type === 'provider') {
+      // `xaiTools.push` 只构造请求 JSON；真正的 web/code/file 等服务端执行由
+      // xAI API 完成，并在 language-model 响应适配中标记 providerExecuted。
       switch (tool.id) {
         case 'xai.web_search': {
           const args = await validateTypes({
@@ -146,6 +155,7 @@ export async function prepareResponsesTools({
         }
 
         default: {
+          // 能力未对等时保持显式失败信号，避免静默改变 Agent 的安全语义。
           toolWarnings.push({
             type: 'unsupported',
             feature: `provider-defined tool ${tool.name}`,
@@ -154,6 +164,8 @@ export async function prepareResponsesTools({
         }
       }
     } else {
+      // function/dynamic 没有 xAI 专属 id 时仍可使用跨 Provider 的函数调用协议，
+      // 但实际 execute 仍归应用/Agent，不是 xAI 托管。
       xaiTools.push({
         type: 'function',
         name: tool.name,

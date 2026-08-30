@@ -33,6 +33,14 @@ const codeExecution_20250522InputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * Anthropic 托管代码执行的 schema 工厂。
+ *
+ * 工厂生成 `isProviderExecuted: true` 的 provider tool；Core 将其交给
+ * `anthropic-prepare-tools` 序列化为 `code_execution_20250522`，响应中的执行
+ * 结果由 `anthropic-language-model` 转回通用 tool-result。SDK 本地没有 Python
+ * 解释器或执行实现。
+ */
 const factory = createProviderExecutedToolFactory<
   {
     /**

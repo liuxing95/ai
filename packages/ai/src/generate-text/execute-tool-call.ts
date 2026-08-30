@@ -40,6 +40,16 @@ import { validateToolContext } from './validate-tool-context';
  *
  * @returns The tool output with performance metrics, or undefined if the tool has no execute function.
  */
+/**
+ * 中文：在应用侧执行一条已解析的工具调用，并管理回调、超时、追踪和流式预览结果。
+ * 调用链：模型响应经 `parseToolCall` 标准化后，`generateText` 或
+ * `executeToolsFromStream` 只把非 `providerExecuted` 的调用传入本函数；本函数再
+ * 调用工具对象的 `execute`。Provider 服务端工具永远不应到达这里——即使误传进来，
+ * 没有本地 `execute` 的工具也会安全返回 `undefined`。
+ *
+ * 返回标准 tool-result/tool-error 和耗时；没有可执行 `execute` 时返回
+ * `undefined`，不会隐式执行任何 Provider 能力。
+ */
 export async function executeToolCall<TOOLS extends ToolSet>({
   toolCall,
   tools,
@@ -86,6 +96,8 @@ export async function executeToolCall<TOOLS extends ToolSet>({
   const { toolName, toolCallId, input } = toolCall;
   const tool = getOwn(tools, toolName);
 
+  // `isExecutableTool` 同时保护“工具不存在”和“声明但未提供 execute”的情况。
+  // 后者允许应用自行接管调用结果，不代表 SDK 会替它执行。
   if (!isExecutableTool(tool)) {
     return undefined;
   }
@@ -123,6 +135,7 @@ export async function executeToolCall<TOOLS extends ToolSet>({
       let toolExecutionMs = 0;
       try {
         // Integration wrappers keep nested AI SDK calls associated with this tool execution.
+        // 中文：集成包装器会让工具内部再次调用 AI SDK 时仍关联到本次工具追踪 span。
         await executeToolInTelemetryContext({
           callId,
           toolCallId,
@@ -130,6 +143,8 @@ export async function executeToolCall<TOOLS extends ToolSet>({
           execute: async () => {
             const startTime = now();
             try {
+              // `executeTool` 统一同步值、Promise 和 AsyncIterable；预览结果可在
+              // 流式场景中立即发给消费端，最终值才写入下一轮模型消息。
               const stream = executeTool({
                 tool,
                 input: input as InferToolInput<typeof tool>,

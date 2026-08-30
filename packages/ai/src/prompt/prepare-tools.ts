@@ -39,6 +39,9 @@ export async function prepareTools<TOOLS extends ToolSet>({
       case undefined:
       case 'dynamic':
       case 'function': {
+        // 普通函数工具和动态工具共用 function 协议：应用提供的 Schema
+        // 会被发送给模型。`dynamic` 仅影响 TypeScript 的运行时类型处理，
+        // 不改变发给 Provider 的工具格式。
         const description = resolveToolDescription({
           tool,
           toolName: name,
@@ -61,6 +64,8 @@ export async function prepareTools<TOOLS extends ToolSet>({
         break;
       }
       case 'provider': {
+        // Provider 工具的工具 ID、参数及其原生协议由 Provider 包负责解释。
+        // `isProviderExecuted` 不影响序列化；它只在后续调度阶段决定由谁执行。
         languageModelTools.push({
           type: 'provider' as const,
           name,

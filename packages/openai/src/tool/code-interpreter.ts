@@ -53,6 +53,10 @@ type CodeInterpreterArgs = {
   container?: string | { fileIds?: string[] };
 };
 
+/**
+ * OpenAI 托管容器中的代码解释器。`providerExecuted: true` 最终来自此 Factory，
+ * 使生成响应的 adapter 将 OpenAI 运行结果原样标准化，而非调用本地 execute。
+ */
 export const codeInterpreterToolFactory = createProviderExecutedToolFactory<
   {
     /**

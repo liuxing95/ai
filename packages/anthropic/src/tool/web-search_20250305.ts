@@ -46,6 +46,10 @@ const webSearch_20250305InputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * Anthropic 托管 Web Search 的版本化工具 Factory。`supportsDeferredResults` 允许
+ * Provider 在与调用不同的响应阶段返回结果；Core 因此不会把它当成本地执行任务。
+ */
 const factory = createProviderExecutedToolFactory<
   {
     /**

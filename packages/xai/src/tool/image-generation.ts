@@ -28,6 +28,9 @@ const imageGenerationOutputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * xAI 托管图像生成工具；图像生成和结果存储由 xAI 服务端完成，SDK 仅做协议适配。
+ */
 const imageGenerationToolFactory = createProviderExecutedToolFactory<
   {},
   {

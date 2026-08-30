@@ -34,6 +34,10 @@ const xSearchOutputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * xAI 对 X 平台内容的服务端检索工具。它是 `xai.*` 专有 Provider 能力，而不是
+ * 可以自动降级到其他 Provider 的通用 function tool。
+ */
 const xSearchToolFactory = createProviderExecutedToolFactory<
   {},
   {

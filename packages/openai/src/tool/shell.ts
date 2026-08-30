@@ -157,6 +157,14 @@ type ShellArgs = {
       };
 };
 
+/**
+ * OpenAI shell 的统一工具定义。
+ *
+ * 默认/local 环境下，模型只提出命令，Core 会调用应用提供的 `execute`。当 args 的
+ * environment 是 `containerAuto` 或 `containerReference` 时，OpenAI adapter 在
+ * 解析 `shell_call` 时额外标记 `providerExecuted: true`，命令在 OpenAI 托管容器
+ * 中执行，Core 不会二次执行。Factory 本身不能在静态类型上表达这项每请求差异。
+ */
 export const shell = createProviderDefinedToolFactoryWithOutputSchema<
   {
     /**

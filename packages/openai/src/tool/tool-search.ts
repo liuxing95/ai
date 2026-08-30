@@ -36,6 +36,14 @@ export const toolSearchOutputSchema: FlexibleSchema<{
   ),
 ) as FlexibleSchema<{ tools: Array<JSONObject> }>;
 
+/**
+ * OpenAI 原生工具搜索的统一工具定义。
+ *
+ * `execution: 'server'` 时 OpenAI 从延迟加载的工具中搜索，adapter 会在响应里标记
+ * `providerExecuted: true`，Core 只消费其结果。`execution: 'client'` 时模型请求
+ * 本地 `execute` 完成检索，Core 走普通应用侧工具执行。因此 Factory 静态上是
+ * provider-defined；真正的执行方由每次请求的 execution 参数和响应共同决定。
+ */
 const toolSearchToolFactory = createProviderDefinedToolFactoryWithOutputSchema<
   {
     /**

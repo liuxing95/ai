@@ -277,6 +277,10 @@ const perplexitySearchOutputSchema = lazySchema(() =>
   ),
 );
 
+/**
+ * AI Gateway 转发的 Perplexity Search 服务端工具。Gateway/下游 Provider 执行搜索；
+ * Factory 的职责仅是固定 Schema 并使 Core 跳过本地 execute。
+ */
 export const perplexitySearchToolFactory = createProviderExecutedToolFactory<
   PerplexitySearchInput,
   PerplexitySearchOutput,

@@ -31,6 +31,13 @@ import type { ToolOrder } from './tool-order';
  * @returns An object that contains the settings for the step.
  * If you return undefined (or for undefined settings), the settings from the outer level will be used.
  */
+/**
+ * 中文：为 Agent 循环中的某一步提供动态设置的应用回调。
+ * 在每次发出模型请求前，`generateText` / `streamText` 都会调用它；随后 Core 用
+ * 返回的 `activeTools` 调用 `filterActiveTools`，再将剩余工具交给 `prepareTools`。
+ * 因而它是应用实现“先检索/筛选数千工具，再让模型选择”的挂载点，不是 SDK 内置的
+ * 语义工具检索器。
+ */
 export type PrepareStepFunction<
   TOOLS extends ToolSet,
   RUNTIME_CONTEXT extends Context = Context,
@@ -120,6 +127,11 @@ export type PrepareStepResult<
 
       /**
        * If provided, only these tools are enabled/available for this step.
+       */
+      /**
+       * 中文：若提供，只将这些名称对应的工具暴露给当前步骤的模型和本地执行调度。
+       * SDK 仅按名称过滤；调用方负责根据用户问题、权限、检索结果等计算这个
+       * 列表。这个覆盖只影响当前 step，下一步会再次调用 `prepareStep` 决定。
        */
       activeTools?: ActiveTools<NoInfer<TOOLS>>;
 
